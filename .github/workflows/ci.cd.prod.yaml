@@ -32,7 +32,7 @@ jobs:
         run: zip -r ./$GITHUB_SHA.zip .
       
       - name: 🌎 Access to AWS
-        uses: aws-actions/configure-aws-credentials@v3
+        uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -45,7 +45,7 @@ jobs:
       - name: 🚀 Deploy to EC2 with CodeDeploy
         run:
           aws deploy create-deployment
-            --application-name code_deploy
+            --application-name codeDeploy
             --deployment-config-name CodeDeployDefault.AllAtOnce
             --deployment-group-name ${{ env.DEPLOYMENT_GROUP_NAME }}
             --s3-location bucket=${{ secrets.S3_BUCKET_NAME }},bundleType=zip,key=${{ env.S3_BUCKET_DIR_NAME }}/$GITHUB_SHA.zip
