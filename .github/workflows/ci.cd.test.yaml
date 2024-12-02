@@ -1,18 +1,16 @@
-name: 🚀 Deploy workflow on production environment
+name: 🚀 Deploy workflow on test environment
 
 on:
-  pull_request:
-    branches: [main]
-    types: [closed]
+  push:
+    branches: ['release/v**']
 
 jobs:
   deploy:
-    if: github.event.pull_request.merged == true
     env:
       ENV_PATH: .env
-      S3_BUCKET_DIR_NAME: production
-      DEPLOYMENT_GROUP_NAME: production
-    environment: production
+      S3_BUCKET_DIR_NAME: test
+      DEPLOYMENT_GROUP_NAME: test
+    environment: test
     runs-on: ubuntu-latest
     steps:
       - name: ✅ Checkout branch
@@ -30,7 +28,7 @@ jobs:
       
       - name: 📦 Zip project files
         run: zip -r ./$GITHUB_SHA.zip .
-      
+
       - name: 🌎 Access to AWS
         uses: aws-actions/configure-aws-credentials@v2
         with:
@@ -39,13 +37,11 @@ jobs:
           aws-region: ap-northeast-2
           
       - name: 🚛 Upload to S3
-        run: |
-           aws s3 cp --region ap-northeast-2 ./$GITHUB_SHA.zip s3://${{ secrets.S3_BUCKET_NAME   }}/${{ env.S3_BUCKET_DIR_NAME }}/$GITHUB_SHA.zip
+        run: aws s3 cp --region ap-northeast-2 ./$GITHUB_SHA.zip s3://${{ secrets.S3_BUCKET_NAME }}/${{ env.S3_BUCKET_DIR_NAME }}/$GITHUB_SHA.zip
          
       - name: 🚀 Deploy to EC2 with CodeDeploy
-        run:
-          aws deploy create-deployment
-            --application-name code_deploy
-            --deployment-config-name CodeDeployDefault.AllAtOnce
-            --deployment-group-name ${{ env.DEPLOYMENT_GROUP_NAME }}
-            --s3-location bucket=${{ secrets.S3_BUCKET_NAME }},bundleType=zip,key=${{ env.S3_BUCKET_DIR_NAME }}/$GITHUB_SHA.zip
+        run: aws deploy create-deployment
+           --application-name code_deploy
+           --deployment-config-name CodeDeployDefault.AllAtOnce
+           --deployment-group-name ${{ env.DEPLOYMENT_GROUP_NAME }}
+           --s3-location bucket=${{ secrets.S3_BUCKET_NAME }},bundleType=zip,key=${{ env.S3_BUCKET_DIR_NAME }}/$GITHUB_SHA.zip
